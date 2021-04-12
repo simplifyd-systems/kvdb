@@ -1,6 +1,7 @@
 package kvdb
 
 import (
+	"context"
 	"errors"
 	"log"
 	"sync"
@@ -40,7 +41,7 @@ func (db *BadgerDB) GetClient() *badger.DB {
 	return db.db
 }
 
-func (db *BadgerDB) connectToDB() error {
+func (db *BadgerDB) connectToDB(ctx context.Context) error {
 	var err error
 
 	// hold a lock to access the db
@@ -53,8 +54,8 @@ func (db *BadgerDB) connectToDB() error {
 }
 
 // Set value v, for key k
-func (db *BadgerDB) Set(k string, v []byte) {
-	db.connectToDB()
+func (db *BadgerDB) Set(ctx context.Context, k string, v []byte) {
+	db.connectToDB(ctx)
 	defer db.disconnect()
 
 	err := db.db.Update(func(txn *badger.Txn) error {
@@ -68,8 +69,8 @@ func (db *BadgerDB) Set(k string, v []byte) {
 }
 
 // Get value for key k
-func (db *BadgerDB) Get(k string) ([]byte, error) {
-	db.connectToDB()
+func (db *BadgerDB) Get(ctx context.Context, k string) ([]byte, error) {
+	db.connectToDB(ctx)
 	defer db.disconnect()
 
 	var valCopy []byte
