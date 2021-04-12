@@ -1,4 +1,4 @@
-module kvdb
+module github.com/simplifyd-systems/kvdb
 
 go 1.14
 
