@@ -3,7 +3,6 @@ package kvdb
 import (
 	"context"
 	"errors"
-	"log"
 	"sync"
 
 	"github.com/dgraph-io/badger"
@@ -54,7 +53,7 @@ func (db *BadgerDB) connectToDB(ctx context.Context) error {
 }
 
 // Set value v, for key k
-func (db *BadgerDB) Set(ctx context.Context, k string, v []byte) {
+func (db *BadgerDB) Set(ctx context.Context, k string, v []byte) error {
 	db.connectToDB(ctx)
 	defer db.disconnect()
 
@@ -64,8 +63,10 @@ func (db *BadgerDB) Set(ctx context.Context, k string, v []byte) {
 	})
 
 	if err != nil {
-		log.Println(err)
+		return err
 	}
+
+	return nil
 }
 
 // Get value for key k
