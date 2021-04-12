@@ -1,4 +1,5 @@
-Simple interface to BadgerDB.
+# README
+Simple interface to BadgerDB written in Go.
 
 ## Key features
 1. Provides concurrent access to BadgerDB through mutex locks
