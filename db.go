@@ -54,10 +54,13 @@ func (db *BadgerDB) connectToDB(ctx context.Context) error {
 
 // Set value v, for key k
 func (db *BadgerDB) Set(ctx context.Context, k string, v []byte) error {
-	db.connectToDB(ctx)
+	err := db.connectToDB(ctx)
+	if err != nil {
+		return err
+	}
 	defer db.disconnect()
 
-	err := db.db.Update(func(txn *badger.Txn) error {
+	err = db.db.Update(func(txn *badger.Txn) error {
 		err := txn.Set([]byte(k), v)
 		return err
 	})
@@ -71,11 +74,14 @@ func (db *BadgerDB) Set(ctx context.Context, k string, v []byte) error {
 
 // Get value for key k
 func (db *BadgerDB) Get(ctx context.Context, k string) ([]byte, error) {
-	db.connectToDB(ctx)
+	err := db.connectToDB(ctx)
+	if err != nil {
+		return nil, err
+	}
 	defer db.disconnect()
 
 	var valCopy []byte
-	err := db.db.View(func(txn *badger.Txn) error {
+	err = db.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(k))
 		if err != nil {
 			return err
