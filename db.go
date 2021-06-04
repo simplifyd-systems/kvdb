@@ -3,36 +3,41 @@ package kvdb
 import (
 	"context"
 	"errors"
-	"sync"
+	"fmt"
 
 	"github.com/dgraph-io/badger"
 )
 
+var ErrDBNotCoonected = errors.New("db not connected")
+
 // ErrMongoDBDuplicate error
-var ErrKVDBDuplicate = errors.New("Duplicate entry")
+var ErrKVDBDuplicate = errors.New("duplicate entry")
 
 // ErrNotFound error
-var ErrNotFound = errors.New("Item not found")
+var ErrNotFound = errors.New("item not found")
 
 // BadgerDB connection holder
 type BadgerDB struct {
 	db   *badger.DB
 	path string
-	lock sync.Mutex
 }
 
 // NewDB creates a DB connection and returns a db instance
 func NewDB(dbFilePath string) (db *BadgerDB, err error) {
 	db = &BadgerDB{}
 
+	db.db, err = badger.Open(badger.DefaultOptions(db.path))
+	if err != nil {
+		return nil, err
+	}
+
 	db.path = dbFilePath
 	return
 }
 
-// disconnect closes the connection to the db and releases the lock
-func (db *BadgerDB) disconnect() {
+// Disconnect closes the connection to the db and releases the lock
+func (db *BadgerDB) Disconnect() {
 	db.db.Close()
-	db.lock.Unlock()
 }
 
 // GetClient func
@@ -40,27 +45,13 @@ func (db *BadgerDB) GetClient() *badger.DB {
 	return db.db
 }
 
-func (db *BadgerDB) connectToDB(ctx context.Context) error {
-	var err error
-
-	// hold a lock to access the db
-	db.lock.Lock()
-	db.db, err = badger.Open(badger.DefaultOptions(db.path))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // Set value v, for key k
 func (db *BadgerDB) Set(ctx context.Context, k string, v []byte) error {
-	err := db.connectToDB(ctx)
-	if err != nil {
-		return err
+	if db.db == nil {
+		return fmt.Errorf("DB not connected")
 	}
-	defer db.disconnect()
 
-	err = db.db.Update(func(txn *badger.Txn) error {
+	err := db.db.Update(func(txn *badger.Txn) error {
 		err := txn.Set([]byte(k), v)
 		return err
 	})
@@ -74,20 +65,17 @@ func (db *BadgerDB) Set(ctx context.Context, k string, v []byte) error {
 
 // Get value for key k
 func (db *BadgerDB) Get(ctx context.Context, k string) ([]byte, error) {
-	err := db.connectToDB(ctx)
-	if err != nil {
-		return nil, err
+	if db.db == nil {
+		return nil, fmt.Errorf("DB not connected")
 	}
-	defer db.disconnect()
 
 	var valCopy []byte
-	err = db.db.View(func(txn *badger.Txn) error {
+	err := db.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(k))
 		if err != nil {
 			return err
 		}
 
-		// Alternatively, you could also use item.ValueCopy().
 		valCopy, err = item.ValueCopy(nil)
 		if err != nil {
 			return err
