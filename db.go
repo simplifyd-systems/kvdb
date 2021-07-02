@@ -26,12 +26,13 @@ type BadgerDB struct {
 func NewDB(dbFilePath string) (db *BadgerDB, err error) {
 	db = &BadgerDB{}
 
+	db.path = dbFilePath
+
 	db.db, err = badger.Open(badger.DefaultOptions(db.path))
 	if err != nil {
 		return nil, err
 	}
 
-	db.path = dbFilePath
 	return
 }
 
