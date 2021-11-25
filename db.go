@@ -60,6 +60,24 @@ func (db *BadgerDB) Set(ctx context.Context, k string, v []byte) error {
 	return err
 }
 
+// MultiSet []{value v, for key k}
+func (db *BadgerDB) MultiSet(ctx context.Context, instr map[string][]byte) error {
+	if db.db == nil {
+		return fmt.Errorf("DB not connected")
+	}
+
+	err := db.db.Update(func(txn *badger.Txn) error {
+		for k, v := range instr {
+			if err := txn.Set([]byte(k), v); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	return err
+}
+
 // Get value for key k
 func (db *BadgerDB) Get(ctx context.Context, k string) ([]byte, error) {
 	if db.db == nil {
