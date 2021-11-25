@@ -113,3 +113,35 @@ func (db *BadgerDB) Del(ctx context.Context, k string) error {
 		return err
 	})
 }
+
+// Dump all keys k and values v
+func (db *BadgerDB) Dump(ctx context.Context, k string) (map[string][]byte, error) {
+	if db.db == nil {
+		return nil, fmt.Errorf("DB not connected")
+	}
+
+	data := make(map[string][]byte)
+
+	err := db.db.View(func(txn *badger.Txn) error {
+		iopt := badger.DefaultIteratorOptions
+
+		itr := txn.NewIterator(iopt)
+
+		defer itr.Close()
+
+		i := 0
+		for itr.Rewind(); itr.Valid(); itr.Next() {
+			i++
+			key := itr.Item().Key()
+			valCopy, err := itr.Item().ValueCopy(nil)
+			if err != nil {
+				return err
+			}
+			data[string(key)] = valCopy
+		}
+
+		return nil
+	})
+
+	return data, err
+}
