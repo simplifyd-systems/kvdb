@@ -115,7 +115,7 @@ func (db *BadgerDB) Del(ctx context.Context, k string) error {
 }
 
 // Dump all keys k and values v
-func (db *BadgerDB) Dump(ctx context.Context, k string) (map[string][]byte, error) {
+func (db *BadgerDB) Dump(ctx context.Context) (map[string][]byte, error) {
 	if db.db == nil {
 		return nil, fmt.Errorf("DB not connected")
 	}
