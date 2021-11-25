@@ -57,11 +57,7 @@ func (db *BadgerDB) Set(ctx context.Context, k string, v []byte) error {
 		return err
 	})
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Get value for key k
@@ -85,9 +81,17 @@ func (db *BadgerDB) Get(ctx context.Context, k string) ([]byte, error) {
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
+	return valCopy, err
+}
+
+// Del key k
+func (db *BadgerDB) Del(ctx context.Context, k string) error {
+	if db.db == nil {
+		return fmt.Errorf("DB not connected")
 	}
 
-	return valCopy, nil
+	return db.db.Update(func(txn *badger.Txn) error {
+		err := txn.Delete([]byte(k))
+		return err
+	})
 }
